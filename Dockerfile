@@ -1,32 +1,18 @@
-# Custom Spilo image with pg_uuidv7 extension
-# Based on official Zalando Spilo PostgreSQL 17 image
+# Custom Spilo image with vectorchord extension
 
 ARG SPILO_VERSION=4.0-p2
-FROM ghcr.io/zalando/spilo-17:${SPILO_VERSION}
+ARG POSTGRES_VERSION=17
 
-# Install build dependencies and PostgreSQL extensions (pg_uuidv7, pg_partman)
-RUN set -ex \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends \
-        build-essential \
-        postgresql-server-dev-17 \
-        git \
-        ca-certificates \
-    && cd /tmp \
-    && git clone https://github.com/fboulnois/pg_uuidv7.git \
-    && cd pg_uuidv7 \
-    && make \
-    && make install \
-    && cd /tmp \
-    && git clone https://github.com/pgpartman/pg_partman.git \
-    && cd pg_partman \
-    && make \
-    && make install \
-    && cd / \
-    && rm -rf /tmp/pg_uuidv7 /tmp/pg_partman \
-    && apt-get purge -y --auto-remove \
-        build-essential \
-        postgresql-server-dev-17 \
-        git \
-    && apt-get clean \
+FROM ghcr.io/zalando/spilo-${POSTGRES_VERSION}:${SPILO_VERSION}
+
+ARG POSTGRES_VERSION=17
+ARG VCHORD_VERSION=0.5.3
+ARG TARGETARCH
+
+RUN env && curl -L \
+      "https://github.com/tensorchord/VectorChord/releases/download/${VCHORD_VERSION}/postgresql-${POSTGRES_VERSION}-vchord_${VCHORD_VERSION}-1_${TARGETARCH}.deb" \
+      -o vchord.deb \
+    && ls -la \
+    && apt-get install -y ./vchord.deb \
+    && rm -f vchord.deb \
     && rm -rf /var/lib/apt/lists/*
